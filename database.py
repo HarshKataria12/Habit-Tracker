@@ -73,14 +73,13 @@ if __name__ == "__main__":
     db = connect_db()
     create_table(db)
     
-    print("\n--- 🟢 Testing Insert ---")
-    h1_id = insert_habit(db, "Read a Book", "🔵 Study", "Daily", "2024-06-01", 7)
-    h2_id = insert_habit(db, "Go to Gym", "🟢 Health", "Weekly", "2024-06-01", 3)
+    print("\n--- Testing Insert ---")
+    h1_id = insert_habit(db, "Read a Book", "Study", "Daily", "2026-02-20", 7)
+    h2_id = insert_habit(db, "Go to Gym", "Health", "Weekly", "2026-02-21", 3)
     
-    insert_completion(db, h1_id, "2024-06-02")
-    insert_completion(db, h1_id, "2024-06-03")
-    insert_completion(db, h2_id, "2024-06-05")
-
+    insert_completion(db, h1_id, "2026-02-20")
+    insert_completion(db, h1_id, "2026-02-21")
+    insert_completion(db, h2_id, "2026-02-21")
     habits = fetch_habits(db)
 
     print("\n" + "="*80)

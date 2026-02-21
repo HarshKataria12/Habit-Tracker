@@ -14,36 +14,27 @@ def filter_by_periodicity(habits_list, periodicity):
 
 # --- 3. Return the longest run streak for a given habit ---
 def calculate_streak(completion_dates, periodicity):
-    """
-    Calculates the streak for a single habit based on its completion dates.
-    """
+    """Calculates the current active streak based on consecutive completions."""
     if not completion_dates:
         return 0
 
-    # Convert strings to date objects and sort them
+    # Sort unique dates
     dates = sorted(list(set([datetime.strptime(d, "%Y-%m-%d").date() for d in completion_dates])))
-    
-    # We look at the most recent completions to find the CURRENT streak
-    current_streak = 0
     today = datetime.now().date()
     
-    # Start checking from the most recent date backwards
-    check_date = dates[-1]
-    
-    # If the last completion was more than 1 day ago, the current streak is broken
-    if (today - check_date).days > 1:
+    # If the last completion was more than 1 day ago, the current active streak is 0
+    if (today - dates[-1]).days > 1:
         return 0
 
-    # Count backwards through consecutive days
-    temp_streak = 1
+    streak = 1
+    # Check backwards from the most recent date
     for i in range(len(dates) - 1, 0, -1):
         if (dates[i] - dates[i-1]).days == 1:
-            temp_streak += 1
+            streak += 1
         else:
-            break  # Gap found, stop counting
+            break # Streak broken by a gap
             
-    return temp_streak
-
+    return streak
 # --- 4. Return the longest run streak of all defined habits ---
 def get_longest_streak_overall(habits_with_completions):
     """

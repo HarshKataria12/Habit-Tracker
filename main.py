@@ -31,8 +31,7 @@ class HabitAppGUI:
 
         # UPDATED: More category options
         self.cat_combo = ctk.CTkComboBox(input_frame, values=[
-            "🟢 Health", "🔵 Study", "🟣 Mind", "💪 Fitness", 
-            "💼 Work", "💰 Finance", "🎨 Creative", "⚪ Other"
+            "💪 Fitness", "💼 Work", "💰 Finance", "🎨 Creative", "⚪ Other"
         ], width=120)
         self.cat_combo.set("🟢 Health")
         self.cat_combo.pack(side="left", padx=5)
@@ -77,19 +76,26 @@ class HabitAppGUI:
         elif selection == "Custom":
             self.goal_entry.configure(state="normal", fg_color="#1e1e1e")
             self.goal_entry.focus()
-
     def refresh_ui(self):
-        """Rebuilds the notebook-style grid."""
+        """Rebuilds the grid with current-day only interaction and creation-date protection."""
         for widget in self.grid_container.winfo_children():
             widget.destroy()
 
-        habits = self.manager.get_habits()
+        # 1. NEW: Top Header for Current Date
         today = date.today()
+        today_str = str(today)
+        date_display = today.strftime("%A, %B %d, %Y")
+        ctk.CTkLabel(self.grid_container, text=f"Today is {date_display}",
+                     font=("Inter", 16, "bold"), text_color=self.primary_color).pack(pady=(0, 15))
+
+        habits = self.manager.get_habits()
+        
+        # Grid automatically refreshes for the current week based on today's date
         monday = today - timedelta(days=today.weekday())
         week_dates = [str(monday + timedelta(days=i)) for i in range(7)]
         day_names = ["M", "T", "W", "T", "F", "S", "S"]
 
-        # Header Row
+        # --- HEADER ROW ---
         header = ctk.CTkFrame(self.grid_container, fg_color=self.header_color, corner_radius=5)
         header.pack(fill="x", pady=2)
         ctk.CTkLabel(header, text="HABIT", width=200, anchor="w", font=("Inter", 12, "bold")).pack(side="left", padx=15)
@@ -99,14 +105,18 @@ class HabitAppGUI:
         ctk.CTkLabel(header, text="GOAL", width=60, font=("Inter", 12, "bold")).pack(side="left", padx=5)
         ctk.CTkLabel(header, text="", width=40).pack(side="left", padx=5)
 
-        # Habit Rows
+        # --- HABIT ROWS ---
         daily_totals = [0, 0, 0, 0, 0, 0, 0]
         for h in habits:
             completions = database.fetch_completions(self.manager.db, h.id)
             row = ctk.CTkFrame(self.grid_container, fg_color=self.row_color, corner_radius=5)
             row.pack(fill="x", pady=2)
 
-            ctk.CTkLabel(row, text=f"{h.category} {h.name}", width=200, anchor="w", font=("Inter", 14)).pack(side="left", padx=15, pady=8)
+            # 2. NEW: Name + Creation Date Mention
+            name_container = ctk.CTkFrame(row, fg_color="transparent")
+            name_container.pack(side="left", padx=15, pady=8)
+            ctk.CTkLabel(name_container, text=f"{h.category} {h.name}", width=200, anchor="w", font=("Inter", 14)).pack(anchor="w")
+            ctk.CTkLabel(name_container, text=f"Created: {h.creation_date}", font=("Inter", 10), text_color="gray").pack(anchor="w")
 
             achieved = 0
             for i, day_date in enumerate(week_dates):
@@ -115,11 +125,27 @@ class HabitAppGUI:
                     achieved += 1
                     daily_totals[i] += 1
                 
+                # 3. FEATURE: Logic for disabling non-current days
+                is_today = (day_date == today_str)
+                is_before_creation = (day_date < h.creation_date)
+                
+                # Only today is clickable; all other days are locked
+                btn_state = "normal" if (is_today and not is_before_creation) else "disabled"
+                
                 btn_text = "✔" if is_checked else ""
-                btn_color = self.success_color if is_checked else "transparent"
+                
+                # Visual feedback for disabled vs active buttons
+                if btn_state == "disabled":
+                    btn_color = "#1B5E20" if is_checked else "#222222" # Dark green if done, dark gray if not
+                    border_color = "#333333"
+                else:
+                    btn_color = self.success_color if is_checked else "transparent"
+                    border_color = self.success_color if is_checked else "#52525B"
+
                 btn = ctk.CTkButton(row, text=btn_text, width=40, height=30, corner_radius=4,
                                     fg_color=btn_color, border_width=2, 
-                                    border_color=self.success_color if is_checked else "#52525B",
+                                    border_color=border_color,
+                                    state=btn_state,
                                     command=lambda hi=h.id, dd=day_date, ic=is_checked: self.toggle_day(hi, dd, ic))
                 btn.pack(side="left", padx=2)
 
@@ -128,7 +154,7 @@ class HabitAppGUI:
             ctk.CTkButton(row, text="🗑️", width=40, height=30, fg_color="transparent", hover_color="#EF4444",
                           command=lambda hi=h.id: self.delete_habit(hi)).pack(side="left", padx=5)
 
-        # Total Row
+        # --- TOTAL ROW ---
         if habits:
             total_row = ctk.CTkFrame(self.grid_container, fg_color="transparent")
             total_row.pack(fill="x", pady=10)
