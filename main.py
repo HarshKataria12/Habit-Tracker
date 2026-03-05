@@ -33,7 +33,7 @@ class HabitAppGUI:
         self.cat_combo = ctk.CTkComboBox(input_frame, values=[
             "💪 Fitness", "💼 Work", "💰 Finance", "🎨 Creative", "⚪ Other"
         ], width=120)
-        self.cat_combo.set("🟢 Health")
+        self.cat_combo.set("💪 Fitness")
         self.cat_combo.pack(side="left", padx=5)
 
         # Smart Periodicity Dropdown
